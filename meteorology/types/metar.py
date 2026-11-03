@@ -484,6 +484,45 @@ def test_ceiling_categorization(metar_report: str) -> str:
     return metar_object.get_ceiling_category()
 
 
+def test_timestamp(metar_report: str, current_time: str) -> str:
+    """
+    Same day:
+    >>> test_timestamp('KRNT 151853Z 33010KT 10SM SCT034 23/14 A3001', '2026-09-15T19:10:00Z')
+    '2026-09-15T18:53:00+00:00'
+
+    Month rollover, where the new month has no day matching the METAR:
+    >>> test_timestamp('KRNT 312353Z 33010KT 10SM SCT034 23/14 A3001', '2026-09-01T00:20:00Z')
+    '2026-08-31T23:53:00+00:00'
+
+    A METAR from the previous month whose day also exists in this month:
+    >>> test_timestamp('KRNT 281853Z 33010KT 10SM SCT034 23/14 A3001', '2026-09-03T12:00:00Z')
+    '2026-08-28T18:53:00+00:00'
+
+    Year rollover:
+    >>> test_timestamp('KRNT 312353Z 33010KT 10SM SCT034 23/14 A3001', '2027-01-01T00:10:00Z')
+    '2026-12-31T23:53:00+00:00'
+
+    Leap day:
+    >>> test_timestamp('KRNT 292353Z 33010KT 10SM SCT034 23/14 A3001', '2028-03-01T00:10:00Z')
+    '2028-02-29T23:53:00+00:00'
+    """
+    metar_object: Metar = Metar(metar_report)
+    return metar_object.get_timestamp(lib.time.get_utc_datetime(current_time)).isoformat()
+
+
+def test_age(metar_report: str, current_time: str) -> str:
+    """
+    >>> test_age('KRNT 151853Z 33010KT 10SM SCT034 23/14 A3001', '2026-09-15T19:10:00Z')
+    '0:17:00'
+    >>> test_age('KRNT 312353Z 33010KT 10SM SCT034 23/14 A3001', '2026-09-01T00:20:00Z')
+    '0:27:00'
+    >>> test_age('KRNT 281853Z 33010KT 10SM SCT034 23/14 A3001', '2026-09-03T12:00:00Z')
+    '5 days, 17:07:00'
+    """
+    metar_object: Metar = Metar(metar_report)
+    return str(metar_object.get_age(lib.time.get_utc_datetime(current_time)))
+
+
 if __name__ == "__main__":
     import doctest
 
